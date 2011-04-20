@@ -167,6 +167,11 @@ shared_examples_for 'a delayed_job backend' do
       Delayed::Worker.max_run_time = 2.minutes
     end
 
+    it "should not reserve successful jobs" do
+      create_job :attempts => 50, :completed_at => described_class.db_time_now
+      described_class.reserve(worker).should be_nil
+    end
+
     it "should not reserve failed jobs" do
       create_job :attempts => 50, :failed_at => described_class.db_time_now
       described_class.reserve(worker).should be_nil
