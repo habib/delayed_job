@@ -16,8 +16,9 @@ module Delayed
 
     # By default failed jobs are destroyed after too many attempts. If you want to keep them around
     # (perhaps to inspect the reason for the failure), set this to false.
-    cattr_accessor :destroy_failed_jobs
+    cattr_accessor :destroy_failed_jobs, :destroy_successful_jobs
     self.destroy_failed_jobs = true
+    self.destroy_successful_jobs = true
 
     self.logger = if defined?(Rails)
       Rails.logger
@@ -119,7 +120,7 @@ module Delayed
     def run(job)
       runtime =  Benchmark.realtime do
         Timeout.timeout(self.class.max_run_time.to_i) { job.invoke_job }
-        job.destroy
+        handle_successful_job(job)
       end
       say "#{job.name} completed after %.4f" % runtime
       return true  # did work
@@ -164,6 +165,9 @@ module Delayed
     end
     
   protected
+    def handle_successful_job(job)
+      self.class.destroy_successful_jobs ? job.destroy : job.update_attributes(:completed_at => Delayed::Job.db_time_now)
+    end
 
     def handle_failed_job(job, error)
       job.last_error = "{#{error.message}\n#{error.backtrace.join('\n')}"

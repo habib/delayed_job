@@ -369,6 +369,23 @@ shared_examples_for 'a delayed_job backend' do
       end
     end
 
+    describe "successful jobs" do
+      before do
+        @job = Delayed::Job.enqueue(SimpleJob.new)
+      end
+
+      it "should delete successful jobs by default" do
+        worker.run(@job)
+        lambda {@job.reload}.should raise_error
+      end
+
+      it "should not delete successful jobs if destroy_successful_jobs = false" do
+        Delayed::Worker.destroy_successful_jobs = false
+        worker.run(@job)
+        @job.reload.completed_at.should_not be_nil
+      end
+    end
+
     describe "failed jobs" do
       before do
         # reset defaults

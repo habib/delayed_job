@@ -30,6 +30,7 @@ ActiveRecord::Schema.define do
     table.datetime :run_at
     table.datetime :locked_at
     table.datetime :failed_at
+    table.datetime :completed_at
     table.string   :locked_by
     table.timestamps
   end
